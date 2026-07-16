@@ -19,6 +19,7 @@ services:
       - --reload-dir
       - /app/backend
     environment:
+      ENGINE_EXECUTABLE: /usr/local/bin/llvm-engine
       WATCHFILES_FORCE_POLLING: "true"
     restart: unless-stopped
 

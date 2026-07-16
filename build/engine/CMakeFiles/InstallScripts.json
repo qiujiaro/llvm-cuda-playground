@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/qiujiarong/Documents/llvm-cuda-playground/build/engine/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

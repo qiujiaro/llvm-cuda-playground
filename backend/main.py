@@ -1,3 +1,5 @@
+import json
+import os
 import re
 import shutil
 import subprocess
@@ -69,6 +71,19 @@ class ProfileResponse(BaseModel):
     remarks: list[OptimizationRemark]
 
 
+class EngineResponse(BaseModel):
+    success: bool
+    llvm_ir: str
+    optimized_ir: str
+    ptx: str
+    assembly: str
+    diagnostics: str
+    function_count: int
+    basic_block_count: int
+    instruction_count: int
+    finding_count: int
+
+
 def _compiler_for(language: Language) -> tuple[str, str]:
     return ("clang", ".c") if language == "c" else ("clang++", ".cpp")
 
@@ -81,9 +96,20 @@ def _find_opt() -> str:
     raise HTTPException(status_code=503, detail="LLVM opt is not installed or is not available on PATH.")
 
 
-def _run(command: list[str], timeout: int = 15) -> subprocess.CompletedProcess[str]:
+def _run(
+    command: list[str],
+    timeout: int = 15,
+    input_text: str | None = None,
+) -> subprocess.CompletedProcess[str]:
     try:
-        return subprocess.run(command, capture_output=True, text=True, timeout=timeout, check=False)
+        return subprocess.run(
+            command,
+            input=input_text,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
     except FileNotFoundError as error:
         raise HTTPException(status_code=503, detail=f"Required compiler executable '{command[0]}' is unavailable.") from error
     except subprocess.TimeoutExpired as error:
@@ -178,6 +204,29 @@ def _parse_remarks(stderr: str) -> list[OptimizationRemark]:
 @app.get("/health")
 def health_check() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/engine/run", response_model=EngineResponse)
+def run_engine(request: CompileRequest) -> EngineResponse:
+    executable = os.environ.get("ENGINE_EXECUTABLE", "llvm-engine")
+    result = _run(
+        [executable, request.optimization_level, "x86_64-unknown-linux-gnu", request.language],
+        input_text=request.code,
+    )
+    if result.returncode != 0:
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Engine execution failed.", "compiler_output": result.stderr},
+        )
+
+    try:
+        payload = json.loads(result.stdout)
+        return EngineResponse.model_validate(payload)
+    except (json.JSONDecodeError, ValueError) as error:
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Engine returned an invalid response.", "compiler_output": result.stderr},
+        ) from error
 
 
 @app.post("/compile", response_model=CompileResponse)

@@ -29,6 +29,15 @@ RUN python3 -m venv /opt/venv && \
 
 ENV PATH="/opt/venv/bin:$PATH"
 
+COPY engine/ ./engine/
+
+RUN cmake -S engine -B /tmp/engine-build \
+        -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build /tmp/engine-build && \
+    install -m 755 /tmp/engine-build/llvm-engine /usr/local/bin/llvm-engine && \
+    rm -rf /tmp/engine-build
+
 COPY backend/ ./backend/
 
 EXPOSE 8000

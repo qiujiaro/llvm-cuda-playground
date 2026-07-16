@@ -73,6 +73,18 @@ type ProfileResult = {
   remarks: Remark[];
 };
 type CompileResult = { success: boolean; llvm_ir: string; compiler_output: string; compile_time_ms: number };
+type EngineResult = {
+  success: boolean;
+  llvm_ir: string;
+  optimized_ir: string;
+  ptx: string;
+  assembly: string;
+  diagnostics: string;
+  function_count: number;
+  basic_block_count: number;
+  instruction_count: number;
+  finding_count: number;
+};
 
 const INITIAL_PROFILE: ProfileResult = {
   compile_time_ms: 42,
@@ -94,7 +106,7 @@ const INITIAL_PROFILE: ProfileResult = {
 };
 
 type AnalysisTab = "overview" | "passes" | "diff" | "remarks" | "profiling";
-type OutputTab = "ir" | "compiler";
+type OutputTab = "ir" | "compiler" | "engine";
 
 async function readJson<T>(response: Response): Promise<T> {
   const data = await response.json();
@@ -149,6 +161,7 @@ export default function Home() {
   const [source, setSource] = useState(DEFAULT_SOURCE);
   const [output, setOutput] = useState(DEFAULT_IR);
   const [compilerOutput, setCompilerOutput] = useState("Compilation completed with 0 errors and 0 warnings.");
+  const [engineOutput, setEngineOutput] = useState("Run the compiler to invoke the C++ engine.");
   const [outputTab, setOutputTab] = useState<OutputTab>("ir");
   const [analysisTab, setAnalysisTab] = useState<AnalysisTab>("overview");
   const [selectedPass, setSelectedPass] = useState(3);
@@ -166,7 +179,7 @@ export default function Home() {
     setStatus("ready");
     try {
       const requestBody = JSON.stringify({ code: source, language: "cpp", optimization_level: optimization });
-      const [compileResponse, profileResponse] = await Promise.all([
+      const [compileResponse, profileResponse, engineResponse] = await Promise.all([
         fetch(`${API_URL}/compile`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -177,14 +190,30 @@ export default function Home() {
           headers: { "Content-Type": "application/json" },
           body: requestBody,
         }),
+        fetch(`${API_URL}/engine/run`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: requestBody,
+        }),
       ]);
-      const [compileData, profileData] = await Promise.all([
+      const [compileData, profileData, engineData] = await Promise.all([
         readJson<CompileResult>(compileResponse),
         readJson<ProfileResult>(profileResponse),
+        readJson<EngineResult>(engineResponse),
       ]);
       setOutput(compileData.llvm_ir);
       setCompilerOutput(compileData.compiler_output || "Compilation completed with 0 errors and 0 warnings.");
       setProfile(profileData);
+      setEngineOutput([
+        `Engine: ${engineData.success ? "success" : "failed"}`,
+        `Functions: ${engineData.function_count}`,
+        `Basic blocks: ${engineData.basic_block_count}`,
+        `Instructions: ${engineData.instruction_count}`,
+        `Findings: ${engineData.finding_count}`,
+        engineData.diagnostics ? `\nDiagnostics:\n${engineData.diagnostics}` : "",
+        `\nPTX:\n${engineData.ptx}`,
+        `\nAssembly:\n${engineData.assembly}`,
+      ].filter(Boolean).join("\n"));
       setOutputTab("ir");
       setStatus("success");
       setBackendStatus("online");
@@ -287,8 +316,9 @@ export default function Home() {
               <button className={outputTab === "compiler" ? "active" : ""} onClick={() => setOutputTab("compiler")}>
                 Compiler Output {status === "error" && <span className="error-dot" />}
               </button>
+              <button className={outputTab === "engine" ? "active" : ""} onClick={() => setOutputTab("engine")}>Engine</button>
             </div>
-            <button className="copy-button" onClick={() => void navigator.clipboard?.writeText(outputTab === "ir" ? output : compilerOutput)}>
+            <button className="copy-button" onClick={() => void navigator.clipboard?.writeText(outputTab === "ir" ? output : outputTab === "compiler" ? compilerOutput : engineOutput)}>
               Copy
             </button>
           </div>
@@ -296,8 +326,8 @@ export default function Home() {
             <CodePane value={output} readOnly />
           ) : (
             <div className={`compiler-console ${status === "error" ? "has-error" : ""}`}>
-              <strong>{status === "error" ? "Compilation Failed" : "Compiler Output"}</strong>
-              <pre>{compilerOutput}</pre>
+              <strong>{outputTab === "engine" ? "C++ Engine Output" : status === "error" ? "Compilation Failed" : "Compiler Output"}</strong>
+              <pre>{outputTab === "engine" ? engineOutput : compilerOutput}</pre>
             </div>
           )}
           <div className="editor-statusbar output-status">

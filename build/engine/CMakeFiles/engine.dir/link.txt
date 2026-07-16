@@ -1,0 +1,2 @@
+/usr/bin/ar qc libengine.a CMakeFiles/engine.dir/frontend/Compiler.cpp.o CMakeFiles/engine.dir/middleend/Optimizer.cpp.o CMakeFiles/engine.dir/middleend/Statistics.cpp.o CMakeFiles/engine.dir/middleend/Analyzer.cpp.o CMakeFiles/engine.dir/backend/PTXGenerator.cpp.o CMakeFiles/engine.dir/backend/AssemblyGenerator.cpp.o
+/usr/bin/ranlib libengine.a
