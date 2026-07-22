@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  engine:
+    name: build + test mirsched core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S engine -B build/mirsched -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build/mirsched --target mirsched mirsched_tests
+
+      - name: Unit tests
+        run: ./build/mirsched/mirsched_tests
+
+      - name: Mini benchmark smoke (baseline path)
+        run: |
+          python3 harness/run_experiments.py \
+            --bin build/mirsched/mirsched \
+            --dags corpus/dag \
+            --config harness/configs/gpu.json \
+            --runs 1 \
+            --out results/ci_smoke.csv
+          echo "----- results/ci_smoke.csv -----"
+          cat results/ci_smoke.csv
+
+  # The LLVM ExtractDAG plugin (pass/) needs a matching LLVM install and is not
+  # built in CI by default. To enable, add an apt/brew LLVM step and:
+  #   cmake -S pass -B pass/build -DLLVM_DIR=<...>/lib/cmake/llvm
+  #   cmake --build pass/build

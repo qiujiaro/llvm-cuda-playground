@@ -1,0 +1,26 @@
+{
+  "function": "stencil",
+  "block": "loop.body",
+  "_note": "SAMPLE DAG for pipeline smoke-testing; build_corpus.sh overwrites this with real ExtractDAG output.",
+  "nodes": [
+    {"id": 0, "opcode": "load",  "isLoad": true,  "isStore": false},
+    {"id": 1, "opcode": "load",  "isLoad": true,  "isStore": false},
+    {"id": 2, "opcode": "load",  "isLoad": true,  "isStore": false},
+    {"id": 3, "opcode": "fmul",  "isLoad": false, "isStore": false},
+    {"id": 4, "opcode": "fmul",  "isLoad": false, "isStore": false},
+    {"id": 5, "opcode": "fmul",  "isLoad": false, "isStore": false},
+    {"id": 6, "opcode": "fadd",  "isLoad": false, "isStore": false},
+    {"id": 7, "opcode": "fadd",  "isLoad": false, "isStore": false},
+    {"id": 8, "opcode": "store", "isLoad": false, "isStore": true}
+  ],
+  "edges": [
+    {"from": 0, "to": 3, "kind": "data"},
+    {"from": 1, "to": 4, "kind": "data"},
+    {"from": 2, "to": 5, "kind": "data"},
+    {"from": 3, "to": 6, "kind": "data"},
+    {"from": 4, "to": 6, "kind": "data"},
+    {"from": 6, "to": 7, "kind": "data"},
+    {"from": 5, "to": 7, "kind": "data"},
+    {"from": 7, "to": 8, "kind": "data"}
+  ]
+}

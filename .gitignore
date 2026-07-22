@@ -1,2 +1,19 @@
+# python
 .venv/
 __pycache__/
+
+# c++/cmake build outputs
+/build/
+pass/build/
+
+# node / next
+node_modules/
+.next/
+
+# generated experiment artifacts (commit real ones deliberately)
+results/*.csv
+results/figures/*.png
+corpus/ll/
+
+# os
+.DS_Store

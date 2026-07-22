@@ -1,0 +1,9 @@
+{
+  "_note": "Low-latency baseline (superscalar-CPU-like). Scheduling should help far less here than under gpu.json.",
+  "aluLatency": 1,
+  "memLatency": 4,
+  "specialLatency": 4,
+  "issueWidth": 4,
+  "regFileSize": 512,
+  "threadsPerWarp": 1
+}

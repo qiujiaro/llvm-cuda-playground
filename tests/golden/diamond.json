@@ -1,0 +1,16 @@
+{
+  "function": "diamond",
+  "block": "entry",
+  "nodes": [
+    {"id": 0, "opcode": "load", "isLoad": true,  "isStore": false},
+    {"id": 1, "opcode": "fmul", "isLoad": false, "isStore": false},
+    {"id": 2, "opcode": "fmul", "isLoad": false, "isStore": false},
+    {"id": 3, "opcode": "fadd", "isLoad": false, "isStore": false}
+  ],
+  "edges": [
+    {"from": 0, "to": 1, "kind": "data"},
+    {"from": 0, "to": 2, "kind": "data"},
+    {"from": 1, "to": 3, "kind": "data"},
+    {"from": 2, "to": 3, "kind": "data"}
+  ]
+}

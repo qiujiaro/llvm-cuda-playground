@@ -1,0 +1,9 @@
+{
+  "_note": "SIMT-flavoured cost model. High memory latency models global-memory access. Directional, not real hardware.",
+  "aluLatency": 1,
+  "memLatency": 200,
+  "specialLatency": 8,
+  "issueWidth": 2,
+  "regFileSize": 65536,
+  "threadsPerWarp": 32
+}
